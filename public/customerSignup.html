@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Customer Signup</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhai+2:wght@400..800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #5b92e5;
+            --primary-dark: #3764b8;
+            --secondary-color: #f0f4f8;
+            --text-color: #333;
+            --border-color: #d1d9e6;
+            --background-color: #e6f0ff;
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--secondary-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: "Baloo Bhai 2", sans-serif;
+            font-weight: 600;
+        }
+
+        .container {
+            display: flex;
+            background: #ffffff;
+            box-shadow: var(--card-shadow);
+            border-radius: 20px;
+            overflow: hidden;
+            width: 900px;
+            max-width: 95%;
+            height: 600px;
+            border: none;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .image-section {
+            flex: 1;
+            background: url('blue2.jpg') no-repeat center center;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            padding: 40px;
+            margin: 5px;
+            border-radius: 20px 0 0 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .form-section {
+            flex: 1.2;
+            padding: 40px;
+            background-color: var(--background-color);
+            overflow-y: auto;
+            /* Added scrolling to the form section */
+        }
+
+        .form-section::-webkit-scrollbar {
+            width: 13px;
+            /* Set the width of the scrollbar */
+        }
+
+        .form-section::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            /* Color of the track */
+            border-radius: 10px;
+            /* Rounded corners for the track */
+        }
+
+        .form-section::-webkit-scrollbar-thumb {
+            background-color: var(--primary-color);
+            /* Color of the scrollbar thumb */
+            border-radius: 10px;
+            /* Rounded corners for the thumb */
+            border: 2px solid #f1f1f1;
+            /* Add a border to create a "padding" effect */
+        }
+
+        .form-section::-webkit-scrollbar-thumb:hover {
+            background-color: var(--primary-dark);
+            /* Color of the thumb on hover */
+        }
+
+        .form-section h2 {
+            margin-bottom: 25px;
+            color: var(--primary-dark);
+            font-size: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: var(--text-color);
+            font-size: 1rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            outline: none;
+            font-size: 1rem;
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 8px rgba(91, 146, 229, 0.4);
+            transform: translateY(-2px);
+        }
+
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 30px;
+            background: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            font-family: "Baloo Bhai 2", sans-serif;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        button:disabled {
+            background: #b0b0b0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        #generateOtpBtn {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+
+        .otp-section {
+            margin-top: 25px;
+        }
+
+        /* .message-field for a good-looking message container. */
+        .message-field {
+            min-height: 25px;
+            margin-top: 5px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+
+        /* Classes for different message types */
+        .message-info {
+            color: var(--primary-dark);
+        }
+
+        .message-success {
+            color: green;
+        }
+
+        .message-error {
+            color: rgb(91, 143, 255);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="image-section">
+        </div>
+
+        <div class="form-section">
+            <h2>Create Account With Us</h2>
+
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="email" required />
+                <p id="email-message" class="message-field"></p>
+            </div>
+            <div class="form-group">
+                <label>Name:</label>
+                <input type="text" id="name" required />
+                <p id="name-message" class="message-field"></p>
+            </div>
+            <div class="form-group">
+                <label>Phone Number:</label>
+                <input type="tel" id="phone" required />
+                <p id="phone-message" class="message-field"></p>
+            </div>
+            <div class="form-group">
+                <label>Age:</label>
+                <input type="number" id="number" required />
+                <p id="age" class="message-field"></p>
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" id="password" required />
+                <p id="password-message" class="message-field"></p>
+            </div>
+            <div class="form-group">
+                <label>Confirm Password:</label>
+                <input type="password" id="confirmPassword" required />
+                <p id="confirmPassword-message" class="message-field"></p>
+            </div>
+
+            <button id="generateOtpBtn" onclick="generateOTP()">Generate OTP</button>
+
+            <div id="otpSection" class="otp-section" style="display:none;">
+                <div class="form-group">
+                    <label>Enter OTP:</label>
+                    <input type="text" id="otpInput" />
+                    <p id="otp-message" class="message-field"></p>
+                </div>
+                <button id="validateBtn" onclick="validateOTP()">Validate OTP</button>
+                <button id="resendOtpBtn" onclick="resendOTP()" disabled>Resend OTP</button>
+            </div>
+            <a href="login.html">Already login ? click here </a>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+
+        function getMessageElement(fieldId) {
+            return document.getElementById(`${fieldId}-message`);
+        }
+
+        function showMessage(fieldId, text, type = 'info') {
+            const msgEl = getMessageElement(fieldId);
+            if (msgEl) {
+                msgEl.textContent = text || '';
+                msgEl.className = `message-field message-${type}`;
+            }
+        }
+
+        function clearMessages() {
+            const messageFields = document.querySelectorAll('.message-field');
+            messageFields.forEach(field => {
+                field.textContent = '';
+                field.className = 'message-field';
+            });
+        }
+
+        function validateEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function validatePasswordRules(password) {
+            // ✅ New strong password rule:
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+            return passwordRegex.test(password);
+        }
+
+
+        function startResendCooldown(seconds = 60) {
+            const btn = document.getElementById('resendOtpBtn');
+            btn.disabled = true;
+            let remaining = seconds;
+            btn.textContent = `Resend OTP (${remaining}s)`;
+            const timer = setInterval(() => {
+                remaining -= 1;
+                btn.textContent = `Resend OTP (${remaining}s)`;
+                if (remaining <= 0) {
+                    clearInterval(timer);
+                    btn.disabled = false;
+                    btn.textContent = 'Resend OTP';
+                }
+            }, 1000);
+        }
+
+        function sendOTP() {
+            const email = document.getElementById('email').value.trim();
+            if (!email || !validateEmail(email)) {
+                showMessage('email', 'Please enter a valid email address.', 'error');
+                return;
+            }
+
+            clearMessages();
+            showMessage('email', 'Sending OTP...', 'info');
+
+            fetch(`${API_BASE}/generate-otp`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email
+                })
+            })
+                .then(async (res) => {
+                    const data = await res.json().catch(() => ({
+                        success: false,
+                        message: 'Unexpected server response.'
+                    }));
+                    if (res.ok && data.success) {
+                        showMessage('otp', data.message || 'OTP sent successfully. Please check your email.', 'success');
+                        startResendCooldown(60);
+                    } else {
+                        showMessage('email', data.message || 'Failed to send OTP. Please try again.', 'error');
+                        document.getElementById('generateOtpBtn').disabled = false;
+                    }
+                })
+                .catch(() => {
+                    showMessage('email', 'Network error while sending OTP.', 'error');
+                    document.getElementById('generateOtpBtn').disabled = false;
+                });
+        }
+
+        function generateOTP() {
+            clearMessages(); // Clear all previous messages
+
+            const username = document.getElementById("name").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const phone = document.getElementById("phone").value.trim();
+            const pass = document.getElementById("password").value;
+            const confirmPass = document.getElementById("confirmPassword").value;
+
+            if (!username) {
+                showMessage("name", "Name is required.", "error");
+                return;
+            }
+
+            if (!email || !validateEmail(email)) {
+                showMessage("email", "Please enter a valid email address.", "error");
+                return;
+            }
+
+            if (!validatePasswordRules(pass)) {
+                showMessage("password", "Password must be at least 8 characters long, include uppercase, lowercase, number, and a special character.", "error");
+                return;
+            }
+
+            if (pass !== confirmPass) {
+                showMessage("confirmPassword", "Passwords do not match!", "error");
+                return;
+            }
+
+            document.getElementById("generateOtpBtn").disabled = true;
+            document.getElementById("otpSection").style.display = "block";
+            sendOTP();
+        }
+
+        function validateOTP() {
+            const email = document.getElementById('email').value.trim();
+            const username = document.getElementById('name').value.trim();
+            const password = document.getElementById('password').value;
+            const otp = document.getElementById('otpInput').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const age = document.getElementById('number').value.trim();
+
+            if (!otp) {
+                showMessage('otp', 'Please enter the OTP sent to your email.', 'error');
+                return;
+            }
+
+            showMessage('otp', 'Validating OTP...', 'info');
+
+            fetch(`${API_BASE}/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email,
+                    username,
+                    password,
+                    phone,   // ✅ new
+                    age,     // ✅ new
+                    otp
+                })
+            })
+                .then(async (res) => {
+                    const data = await res.json().catch(() => ({
+                        success: false,
+                        message: 'Unexpected server response.'
+                    }));
+                    if (res.ok && data.success) {
+                        showMessage('otp', 'Sign-up successful! Redirecting to login...', 'success');
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 1500);
+                    } else {
+                        showMessage('otp', data.message || 'OTP validation failed.', 'error');
+                    }
+                })
+                .catch(() => showMessage('otp', 'Network error during validation.', 'error'));
+        }
+
+        function resendOTP() {
+            showMessage('otp', 'Sending new OTP...', 'info');
+            sendOTP();
+        }
+    </script>
+</body>
+
+</html>

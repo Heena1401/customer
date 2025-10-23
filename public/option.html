@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sharing Yatra Signup</title>
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .container{
+            border: 5px solid transparent;
+            height: 330px;
+            width: 550px;
+            border-radius: 15px;
+            box-shadow: 0 0 8px rgba(1, 132, 246, 0.837);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 class="title">SHARING YATRA <i class="far fa-map"></i></h1>
+    <p class="subtitle">Join Sharing Yatra Today!</p>
+
+    <div class="buttons">
+        <div class="btn-card" onclick="selectRole('customer')">
+            <div class="icon"><i class="fa-solid fa-suitcase"></i></div>
+            <p>I’m a <br> Customer</p>
+        </div>
+        <div class="btn-card" onclick="selectRole('agency')">
+            <div class="icon"><i class="fa-solid fa-building"></i> <i class="fa-solid fa-globe"></i></div>
+            <p>I’m a <br> Travel Agency</p>
+        </div>
+    </div>
+</div>
+
+<script >
+    function selectRole(role) {
+    if (role === 'customer') {
+        window.location.href = '/customerSignup.html'; // already serves customerSignup.html
+    } else if (role === 'agency') {
+        window.location.href = '/agencySignup.html';
+    }
+}
+
+</script>
+</body>
+</html>

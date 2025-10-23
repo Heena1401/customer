@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - Sharing Yatra</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    .custom-scrollbar::-webkit-scrollbar{ width:6px; }
+    .custom-scrollbar::-webkit-scrollbar-track{ background:#f1f5f9; }
+    .custom-scrollbar::-webkit-scrollbar-thumb{ background:#94a3b8; border-radius:3px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover{ background:#475569; }
+  </style>
+</head>
+<body class="bg-gray-100">
+  <div class="flex h-screen bg-gray-100">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-64 flex-shrink-0 bg-white shadow-lg hidden lg:flex flex-col">
+      <!-- Logo/Header -->
+      <div class="h-16 flex items-center justify-center border-b">
+        <h1 class="text-2xl font-bold text-gray-800">Sharing Yatra</h1>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 px-4 py-6 space-y-2">
+        <a href="#" class="flex items-center px-4 py-2 text-gray-700 bg-gray-200 rounded-lg font-semibold">
+          <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+            </path>
+          </svg>
+          Dashboard
+        </a>
+        <a href="/booking.html" class="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+          <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Book a Ride
+        </a>
+        <a href="#" class="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+          <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+            </path>
+          </svg>
+          My Bookings
+        </a>
+        <a href="#" class="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+          <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z">
+            </path>
+          </svg>
+          Profile
+        </a>
+      </nav>
+
+      <!-- Footer/Logout -->
+      <div class="px-4 py-6 border-t">
+        <a id="logoutBtn" href="/login.html" class="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+          <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+            </path>
+          </svg>
+          Logout
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- Mobile Header -->
+      <header class="bg-white shadow-sm h-16 flex justify-between items-center px-4 lg:hidden">
+        <h1 class="text-2xl font-bold text-gray-800">Sharing Yatra</h1>
+        <button id="mobileToggle"
+                class="p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+                aria-label="Open sidebar">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16">
+            </path>
+          </svg>
+        </button>
+      </header>
+
+      <!-- Scrollable Content -->
+      <main class="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 lg:p-8">
+        <!-- Welcome Header -->
+        <div class="mb-8">
+          <h2 id="welcomeTitle" class="text-3xl font-bold text-gray-900">Welcome back, User!</h2>
+          <p class="text-gray-500 mt-1">Here's a summary of your recent activity.</p>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Left Column: Recent Bookings -->
+          <section class="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6">
+            <div class="flex justify-between items-center mb-6">
+              <h3 class="text-xl font-semibold text-gray-800">Recent Bookings</h3>
+              <a href="/booking.html" class="text-sm font-medium text-blue-600 hover:underline">Book a New Ride</a>
+            </div>
+
+            <!-- Bookings List -->
+            <div id="recentBookings" class="space-y-4">
+              <!-- Static placeholders shown until API is wired -->
+              <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div class="flex items-center space-x-4">
+                  <div class="bg-green-100 p-2 rounded-full">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="font-semibold text-gray-700">Dadar to Thane</p>
+                    <p class="text-sm text-gray-500">Aug 25, 2025 at 10:30 AM</p>
+                  </div>
+                </div>
+                <span class="text-sm font-medium text-green-600 bg-green-100 px-3 py-1 rounded-full">Confirmed</span>
+              </div>
+
+              <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div class="flex items-center space-x-4">
+                  <div class="bg-yellow-100 p-2 rounded-full">
+                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="font-semibold text-gray-700">Andheri to Borivali</p>
+                    <p class="text-sm text-gray-500">Aug 28, 2025 at 5:00 PM</p>
+                  </div>
+                </div>
+                <span class="text-sm font-medium text-yellow-600 bg-yellow-100 px-3 py-1 rounded-full">Pending</span>
+              </div>
+
+              <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg opacity-70">
+                <div class="flex items-center space-x-4">
+                  <div class="bg-gray-200 p-2 rounded-full">
+                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="font-semibold text-gray-700">CSMT to Kurla</p>
+                    <p class="text-sm text-gray-500">Aug 15, 2025 at 9:00 AM</p>
+                  </div>
+                </div>
+                <span class="text-sm font-medium text-gray-600 bg-gray-200 px-3 py-1 rounded-full">Completed</span>
+              </div>
+            </div>
+
+            <a href="#" class="text-sm font-medium text-blue-600 hover:underline mt-6 block text-center">View all bookings</a>
+          </section>
+
+          <!-- Right Column: Quick Actions & Profile -->
+          <div class="space-y-8">
+            <div class="bg-white rounded-2xl shadow-lg p-6 text-center">
+              <h3 class="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h3>
+              <a href="/booking.html"
+                 class="w-full block bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-300">
+                 Book a New Ride
+              </a>
+            </div>
+
+            <section class="bg-white rounded-2xl shadow-lg p-6">
+              <h3 class="text-xl font-semibold text-gray-800 mb-4">Profile Summary</h3>
+              <div id="profileBox" class="space-y-3 text-sm">
+                <div class="flex justify-between"><span class="text-gray-500">Name:</span><span class="font-medium text-gray-800">Test User</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">Email:</span><span class="font-medium text-gray-800">user@example.com</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">Total Rides:</span><span class="font-medium text-gray-800">12</span></div>
+              </div>
+              <a href="#" class="text-sm font-medium text-blue-600 hover:underline mt-6 block text-center">Edit Profile</a>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // Small util to create profile rows safely
+    function row(label, value) {
+      const wrap = document.createElement('div');
+      wrap.className = 'flex justify-between';
+      const l = document.createElement('span');
+      l.className = 'text-gray-500';
+      l.textContent = label;
+      const v = document.createElement('span');
+      v.className = 'font-medium text-gray-800';
+      v.textContent = value ?? '';
+      wrap.append(l, v);
+      return wrap;
+    }
+
+    async function loadProfile() {
+      try {
+        const res = await fetch("/api/profile", {
+          method: "GET",
+          credentials: "include" // send session cookie
+        });
+
+        if (res.status === 401) {
+          window.location.href = "/login.html";
+          return;
+        }
+
+        const user = await res.json();
+
+        // Update welcome header
+        const title = document.getElementById("welcomeTitle");
+        if (title) title.textContent = `Welcome back, ${user.name || 'User'}!`;
+
+        // Update Profile Summary section (XSS-safe)
+        const profileBox = document.getElementById("profileBox");
+        if (profileBox) {
+          profileBox.innerHTML = ""; // clear safely
+          profileBox.append(
+            row("Name:", user.name || ""),
+            row("Email:", user.email || ""),
+            row("Role:", user.type || "")
+          );
+        }
+      } catch (err) {
+        console.error("Error loading profile:", err);
+        window.location.href = "/login.html";
+      }
+    }
+
+    // Optional: render recent bookings if you add GET /api/bookings
+    async function loadBookings() {
+      const container = document.getElementById("recentBookings");
+      if (!container) return;
+      try {
+        const res = await fetch("/api/bookings?limit=5", { credentials: "include" });
+        if (!res.ok) return; // keep static placeholders
+        const data = await res.json(); // expect [{from,to,date,time,status}, ...]
+        if (!Array.isArray(data) || data.length === 0) return;
+
+        container.innerHTML = ""; // replace placeholders
+        for (const b of data) {
+          const item = document.createElement("div");
+          item.className = "flex items-center justify-between p-4 bg-gray-50 rounded-lg";
+
+          const left = document.createElement("div");
+          left.className = "flex items-center space-x-4";
+
+          const iconWrap = document.createElement("div");
+          iconWrap.className = (b.status === "confirmed" ? "bg-green-100" :
+                                b.status === "pending"   ? "bg-yellow-100" :
+                                                           "bg-gray-200") + " p-2 rounded-full";
+          iconWrap.innerHTML = `
+            <svg class="w-6 h-6 ${b.status === "confirmed" ? "text-green-600" :
+                                   b.status === "pending"   ? "text-yellow-600" : "text-gray-600"}"
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="${b.status === "confirmed" ? "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                   : b.status === "pending"   ? "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                              : "M5 13l4 4L19 7"}"></path>
+            </svg>
+          `;
+
+          const meta = document.createElement("div");
+          const p1 = document.createElement("p"); p1.className = "font-semibold text-gray-700";
+          p1.textContent = `${b.from || ""} to ${b.to || ""}`;
+          const p2 = document.createElement("p"); p2.className = "text-sm text-gray-500";
+          p2.textContent = `${b.date || ""} at ${b.time || ""}`;
+          meta.append(p1, p2);
+
+          left.append(iconWrap, meta);
+
+          const badge = document.createElement("span");
+          badge.className = "text-sm font-medium px-3 py-1 rounded-full " +
+            (b.status === "confirmed" ? "text-green-600 bg-green-100" :
+             b.status === "pending"   ? "text-yellow-600 bg-yellow-100" :
+                                        "text-gray-600 bg-gray-200");
+          badge.textContent = b.status ? b.status[0].toUpperCase() + b.status.slice(1) : "—";
+
+          item.append(left, badge);
+          container.append(item);
+        }
+      } catch (e) {
+        console.warn("Bookings API not available, keeping placeholders.");
+      }
+    }
+
+    function wireInteractions() {
+      // Mobile sidebar toggle
+      const toggle = document.getElementById("mobileToggle");
+      const sidebar = document.getElementById("sidebar");
+      if (toggle && sidebar) {
+        toggle.addEventListener("click", () => {
+          const isHidden = sidebar.classList.contains("hidden");
+          sidebar.classList.toggle("hidden", !isHidden);
+          sidebar.classList.toggle("flex", isHidden);
+        });
+      }
+
+      // Logout
+      const logoutBtn = document.getElementById("logoutBtn");
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          try {
+            // This expects a backend /logout route (see snippet below)
+            await fetch("/logout", { method: "POST", credentials: "include" });
+          } catch (_) { /* noop */ }
+          window.location.href = "/login.html";
+        });
+      }
+    }
+
+    // Initialize
+    (async function init() {
+      wireInteractions();
+      await loadProfile();
+      loadBookings(); // fire-and-forget
+    })();
+  </script>
+</body>
+</html>

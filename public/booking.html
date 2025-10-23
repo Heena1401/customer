@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sharing Yatra - Book Your Ride</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Removed the radio button style, now handled by Tailwind's 'peer' utility */
+        .spinner {
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border-left-color: #ffffff;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #scheduleContainer {
+            transition: all 0.3s ease-in-out;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+        }
+
+        #scheduleContainer.visible {
+            max-height: 500px;
+            opacity: 1;
+        }
+
+        .vehicle-item:hover {
+            background-color: #eff6ff;
+        }
+
+        /* Light blue on hover */
+    </style>
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-8 sm:p-10">
+
+        <div class="text-center mb-8">
+            <h1
+                class="text-4xl sm:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+                Sharing Yatra
+            </h1>
+            <p class="text-gray-500 mt-2"><i>Your Ride, Your Pace</i></p>
+        </div>
+
+        <form id="bookingForm" class="space-y-6" novalidate>
+            <div class="relative">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <div>
+                        <label for="from" class="block text-sm font-medium text-gray-700 mb-1">From</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                                </svg>
+                            </div>
+                            <input type="text" id="from" name="from" required placeholder="e.g., Churchgate"
+                                list="station-list"
+                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="to" class="block text-sm font-medium text-gray-700 mb-1">To</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                                </svg>
+                            </div>
+                            <input type="text" id="to" name="to" required placeholder="e.g., Thane" list="station-list"
+                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition">
+                        </div>
+                    </div>
+                </div>
+                <div id="distanceDisplay" class="text-right text-sm font-semibold text-blue-600 h-5 mt-2 pr-1"></div>
+            </div>
+
+            <div class="space-y-4">
+                <h3 class="text-sm font-medium text-gray-700">Pickup Address</h3>
+                <div>
+                    <label for="areaInput" class="block text-sm font-medium text-gray-700 mb-1">Area / Landmark</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h6.75M9 11.25h6.75M9 15.75h6.75M9 20.25h6.75" />
+                            </svg>
+                        </div>
+                        <input type="text" id="areaInput" name="areaInput" required
+                            placeholder="e.g., Near Station, Main Road"
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="cityInput" class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M2.25 21h19.5m-18-18h16.5M5.25 6H18.75m-13.5 0V18m13.5 0V6m-6.75 0v.75m0 3v.75m0 3v.75m0 3V18m-3.375-3.028a1.125 1.125 0 11-2.25 0 1.125 1.125 0 012.25 0zM12 9.75a1.125 1.125 0 11-2.25 0 1.125 1.125 0 012.25 0zM12 14.25a1.125 1.125 0 11-2.25 0 1.125 1.125 0 012.25 0zM15.375 9.75a1.125 1.125 0 11-2.25 0 1.125 1.125 0 012.25 0zM15.375 14.25a1.125 1.125 0 11-2.25 0 1.125 1.125 0 012.25 0zM18.75 9.75a1.125 1.125 0 11-2.25 0 1.125 1.125 0 012.25 0zM18.75 14.25a1.125 1.125 0 11-2.25 0 1.125 1.125 0 012.25 0z" />
+                            </svg>
+                        </div>
+                        <input type="text" id="cityInput" name="cityInput" required placeholder="e.g., Thane"
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+                </div>
+
+                <textarea id="pickupAddress" name="pickupAddress" rows="1" required class="hidden"></textarea>
+            </div>
+
+            <div class="space-y-4">
+                <h3 class="text-sm font-medium text-gray-700">Choose Your Booking Type</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <input type="radio" id="expressConnect" name="bookingType" value="express_connect"
+                            class="hidden peer" checked>
+                        <label for="expressConnect"
+                            class="block p-4 border-2 border-gray-300 rounded-lg cursor-pointer transition peer-checked:border-blue-500 peer-checked:ring-2 peer-checked:ring-blue-500/50">
+                            <span class="font-semibold text-gray-800">Express Connect</span>
+                            <p class="text-sm text-gray-500 mt-1">For immediate travel.</p>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" id="scheduleSave" name="bookingType" value="schedule_and_save"
+                            class="hidden peer">
+                        <label for="scheduleSave"
+                            class="block p-4 border-2 border-gray-300 rounded-lg cursor-pointer transition peer-checked:border-blue-500 peer-checked:ring-2 peer-checked:ring-blue-500/50">
+                            <span class="font-semibold text-gray-800">Schedule & Save</span>
+                            <p class="text-sm text-gray-500 mt-1">For planned trips.</p>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="scheduleContainer">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-200">
+                    <div>
+                        <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Schedule Date</label>
+                        <input type="date" id="date" name="date"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+                    <div>
+                        <label for="time" class="block text-sm font-medium text-gray-700 mb-1">Schedule Time</label>
+                        <input type="time" id="time" name="time"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <button type="submit" id="submitButton"
+                    class="w-full flex items-center justify-center bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-300 disabled:bg-blue-400">
+                    <span id="buttonText">Search Agency</span>
+                    <div id="buttonSpinner" class="spinner hidden ml-2"></div>
+                </button>
+            </div>
+        </form>
+
+        <div id="messageArea" class="mt-6 text-center"></div>
+
+        <div id="agencyResultsContainer" class="hidden mt-8">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-gray-800">Available Rides</h2>
+                <button id="backToFormBtn" class="text-sm text-blue-600 hover:underline">&larr; Back to Edit</button>
+            </div>
+            <div id="agencyGrid" class="space-y-4 mt-4">
+            </div>
+        </div>
+
+        <datalist id="station-list"></datalist>
+    </div>
+
+    <script>
+        // --- DOM Element References ---
+        const bookingForm = document.getElementById('bookingForm');
+        const submitButton = document.getElementById('submitButton');
+        const buttonText = document.getElementById('buttonText');
+        const buttonSpinner = document.getElementById('buttonSpinner');
+        const messageArea = document.getElementById('messageArea');
+        const fromInput = document.getElementById('from');
+        const toInput = document.getElementById('to');
+        const distanceDisplay = document.getElementById('distanceDisplay');
+        const stationList = document.getElementById('station-list');
+        const expressConnectRadio = document.getElementById('expressConnect');
+        const scheduleSaveRadio = document.getElementById('scheduleSave');
+        const scheduleContainer = document.getElementById('scheduleContainer');
+        const dateInput = document.getElementById('date');
+        const timeInput = document.getElementById('time');
+        const agencyResultsContainer = document.getElementById('agencyResultsContainer');
+        const agencyGrid = document.getElementById('agencyGrid');
+        const backToFormBtn = document.getElementById('backToFormBtn');
+
+        // --- NEW: References for structured address ---
+        const areaInput = document.getElementById('areaInput');
+        const cityInput = document.getElementById('cityInput');
+        const pickupAddressInput = document.getElementById('pickupAddress'); // The hidden textarea
+
+        // --- Global variables ---
+        let uniqueStationNames = new Set();
+        let calculatedDistance = 0;
+        let tempBookingDetails = {};
+
+        // --- NEW: Function to update hidden textarea ---
+        /**
+         * Combines Area and City fields into the hidden pickupAddress textarea
+         * This ensures the backend API call gets the full address string
+         */
+        function updateHiddenPickupAddress() {
+            const area = areaInput.value.trim();
+            const city = cityInput.value.trim();
+
+            let combinedAddress = area;
+            if (area && city) {
+                combinedAddress += ', ' + city; // e.g., "Near Station, Thane"
+            } else if (city) {
+                combinedAddress = city;
+            }
+
+            pickupAddressInput.value = combinedAddress;
+        }
+
+        // --- Distance Calculation (Unchanged) ---
+        async function calculateAndDisplayDistance() {
+            // ... (previous logic for fetch and error handling is the same)
+            const fromValue = fromInput.value.trim();
+            const toValue = toInput.value.trim();
+
+            if (!fromValue || !toValue || !uniqueStationNames.has(fromValue) || !uniqueStationNames.has(toValue)) {
+                distanceDisplay.textContent = '';
+                calculatedDistance = 0; // Reset distance
+                return;
+            }
+
+            distanceDisplay.textContent = 'Calculating...';
+            try {
+                const response = await fetch(`http://localhost:5000/api/distance?from=${encodeURIComponent(fromValue)}&to=${encodeURIComponent(toValue)}`);
+                if (!response.ok) { throw new Error('Route not found.'); }
+                const result = await response.json();
+                const distance = result.totalDistance;
+
+                // ## STORE DISTANCE GLOBALLY ##
+                calculatedDistance = distance;
+
+                distanceDisplay.textContent = `Total Distance: ${distance.toFixed(2)} km`;
+                distanceDisplay.classList.remove('text-red-700');
+                distanceDisplay.classList.add('text-green-700');
+            } catch (error) {
+                distanceDisplay.textContent = error.message;
+                distanceDisplay.classList.remove('text-green-700');
+                distanceDisplay.classList.add('text-red-700');
+                calculatedDistance = 0; // Reset distance on error
+            }
+        }
+
+        // --- Display Agency and Vehicle Results (Unchanged) ---
+        async function displayAgencyResults() {
+            setLoading(true, 'Searching...');
+            agencyGrid.innerHTML = '';
+            messageArea.innerHTML = '';
+
+            // This variable is now sourced from the *hidden* textarea,
+            // which is populated by updateHiddenPickupAddress()
+            const pickupAddress = tempBookingDetails.pickupAddress;
+
+            try {
+                // This call remains IDENTICAL
+                const response = await fetch(`/api/search-rides?address=${encodeURIComponent(pickupAddress)}`);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Could not find rides.');
+                }
+
+                const agenciesWithVehicles = await response.json();
+
+                if (agenciesWithVehicles.length === 0) {
+                    displayMessage('Sorry, no agencies found for your pickup area.', 'error');
+                    return;
+                }
+
+                agenciesWithVehicles.forEach(agency => {
+                    const agencyCard = document.createElement('div');
+                    agencyCard.className = 'border border-gray-200 rounded-lg shadow-sm overflow-hidden';
+
+                    let vehiclesHTML = '';
+
+                    agency.vehicles.forEach(vehicle => {
+                        const totalPrice = (calculatedDistance * vehicle.rate_per_km).toFixed(0);
+
+                        vehiclesHTML += `
+                            <div class="vehicle-item flex justify-between items-center p-3 border-t border-gray-100">
+                                <div class="flex-1">
+                                    <p class="font-semibold text-gray-800">${vehicle.vehicle_name} (${vehicle.vehicle_type})</p>
+                                    <p class="text-xs text-gray-500">Model: ${vehicle.model} | Max: ${vehicle.max_capacity} seats</p>
+                                </div>
+                                <div class="text-right ml-2">
+                                    <p class="font-bold text-lg text-gray-900">₹${totalPrice}</p>
+                                    <button class="book-vehicle-btn text-xs bg-green-600 text-white font-semibold py-1 px-3 rounded-full hover:bg-green-700"
+                                        data-agency-id="${agency._id}"
+                                        data-vehicle-id="${vehicle._id}" 
+                                        data-total-price="${totalPrice}">
+                                        Book Now
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    if (agency.vehicles.length === 0) {
+                        vehiclesHTML = `<p class="p-3 text-sm text-gray-500">No vehicles currently available.</p>`;
+                    }
+
+                    agencyCard.innerHTML = `
+                        <div class="p-3 bg-gray-50">
+                            <h3 class="font-bold text-lg text-gray-800">${agency.name}</h3>
+                            <p class="text-sm text-gray-600">${agency.address}</p>
+                        </div>
+                        <div>${vehiclesHTML}</div>
+                    `;
+                    agencyGrid.appendChild(agencyCard);
+                });
+
+                bookingForm.classList.add('hidden');
+                agencyResultsContainer.classList.remove('hidden');
+
+            } catch (error) {
+                displayMessage(error.message, 'error');
+            } finally {
+                setLoading(false, 'Search Agency');
+            }
+        }
+
+        // --- "Search Agency" Button Logic (Unchanged) ---
+        bookingForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            messageArea.innerHTML = '';
+
+            if (!bookingForm.checkValidity()) {
+                // This will now correctly check the new 'areaInput' and 'cityInput'
+                displayMessage('Please fill all required fields.', 'error');
+                return;
+            }
+            if (calculatedDistance <= 0) {
+                displayMessage('Could not calculate distance. Please select valid stations.', 'error');
+                return;
+            }
+
+            // Store form data temporarily
+            const formData = new FormData(bookingForm);
+            tempBookingDetails = {
+                from: formData.get('from'),
+                to: formData.get('to'),
+                pickupAddress: formData.get('pickupAddress'),
+                area: formData.get('areaInput'),
+                city: formData.get('cityInput'), 
+                bookingType: formData.get('bookingType'),
+                totalDistance: calculatedDistance.toFixed(2)
+            };
+            if (tempBookingDetails.bookingType === 'schedule_and_save') {
+                tempBookingDetails.date = formData.get('date');
+                tempBookingDetails.time = formData.get('time');
+            }
+
+            displayAgencyResults();
+        });
+
+        // --- Final Booking Submission (Unchanged) ---
+        agencyGrid.addEventListener('click', async function (event) {
+            if (!event.target.classList.contains('book-vehicle-btn')) return;
+
+            const selectedButton = event.target;
+            selectedButton.disabled = true;
+            selectedButton.innerHTML = `<div class="spinner mx-auto" style="width:12px; height:12px;"></div>`;
+
+            // Add selected vehicle info to booking details
+            // NOTE: The user's code had a small bug here reading `vehicle-type`. I corrected it based on the vehicle loop (it wasn't in the dataset).
+            // I will keep the user's original `vehicleType` data attribute, assuming it was intended to be `vehicle-id`.
+            tempBookingDetails.agencyId = selectedButton.dataset.agencyId;
+            tempBookingDetails.vehicleId = selectedButton.dataset.vehicleId; // Assuming this is what was intended
+            tempBookingDetails.totalPrice = selectedButton.dataset.totalPrice;
+
+            try {
+                const response = await fetch('http://localhost:5000/api/bookings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(tempBookingDetails)
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Booking failed.');
+
+                const successMessage = `
+                    <h3 class="text-lg font-semibold text-green-800">Request Sent!</h3>
+                    <p class="text-gray-600 mt-1">Your Booking ID is: <strong class="font-mono">${result.bookingId || 'SY-12345'}</strong></p>
+                    <p class="text-gray-500 text-sm mt-2">Your request has been sent to the agency for approval.</p>`;
+                displayMessage(successMessage, 'success');
+
+                // Reset UI
+                // bookingForm.reset(); // This will clear 'areaInput', 'cityInput', and the hidden 'pickupAddress'
+                agencyResultsContainer.classList.add('hidden');
+                bookingForm.classList.remove('hidden');
+                calculatedDistance = 0;
+                distanceDisplay.textContent = '';
+
+            } catch (error) {
+                displayMessage(error.message, 'error');
+                selectedButton.disabled = false;
+                selectedButton.textContent = 'Book Now';
+            }
+        });
+
+        // --- Other Functions and Event Listeners ---
+        backToFormBtn.addEventListener('click', () => {
+            agencyResultsContainer.classList.add('hidden');
+            bookingForm.classList.remove('hidden');
+            messageArea.innerHTML = '';
+        });
+
+        function setLoading(isLoading, text = 'Search Agency') {
+            submitButton.disabled = isLoading;
+            buttonText.textContent = isLoading ? text : 'Search Agency';
+            buttonSpinner.classList.toggle('hidden', !isLoading);
+        }
+
+        // --- (Unchanged Functions) ---
+        async function loadStations() {
+            try {
+                const response = await fetch('stationdata.json');
+                if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
+                const fullStationData = await response.json();
+                stationList.innerHTML = '';
+                fullStationData.lines.forEach(line => {
+                    line.routes.forEach(route => {
+                        route.stations.forEach(station => { uniqueStationNames.add(station.station_name); });
+                    });
+                });
+                uniqueStationNames.forEach(stationName => {
+                    const option = document.createElement('option');
+                    option.value = stationName;
+                    stationList.appendChild(option);
+                });
+            } catch (error) { console.error("Could not load station data:", error); }
+        }
+        function setMinDateTime() {
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            dateInput.min = `${yyyy}-${mm}-${dd}`;
+            if (dateInput.value === `${yyyy}-${mm}-${dd}`) {
+                const hh = String(now.getHours()).padStart(2, '0');
+                const min = String(now.getMinutes()).padStart(2, '0');
+                timeInput.min = `${hh}:${min}`;
+            } else { timeInput.min = ''; }
+        }
+        function toggleScheduleSection() {
+            if (scheduleSaveRadio.checked) {
+                scheduleContainer.classList.add('visible');
+                dateInput.required = true; timeInput.required = true; setMinDateTime();
+            } else {
+                scheduleContainer.classList.remove('visible');
+                dateInput.required = false; timeInput.required = false;
+            }
+        }
+        function displayMessage(message, type) {
+            messageArea.innerHTML = message;
+            messageArea.className = `mt-6 text-center p-4 rounded-lg ${type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`;
+        }
+
+        // --- Event Listeners Setup ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStations();
+            toggleScheduleSection();
+        });
+
+        // Location inputs
+        fromInput.addEventListener('input', calculateAndDisplayDistance);
+        toInput.addEventListener('input', calculateAndDisplayDistance);
+
+        // Booking type radios
+        expressConnectRadio.addEventListener('change', toggleScheduleSection);
+        scheduleSaveRadio.addEventListener('change', toggleScheduleSection);
+        dateInput.addEventListener('change', setMinDateTime);
+
+        // --- NEW: Event listeners for structured address ---
+        areaInput.addEventListener('input', updateHiddenPickupAddress);
+        cityInput.addEventListener('input', updateHiddenPickupAddress);
+
+    </script>
+</body>
+
+</html>
