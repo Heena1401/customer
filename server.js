@@ -46,9 +46,9 @@ async function getNextBookingId() {
 // ====== Email Transporter ======
 const transporter = nodemailer.createTransport({
   service: 'gmail',
-  auth: {
-    user: 'sharingyatra@gmail.com',
-    pass: 'ksnkixrxdktmtbgs' // App password
+   auth: {
+    user: process.env.user,
+    pass: process.env.pass
   }
 });
 
