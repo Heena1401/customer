@@ -18,7 +18,14 @@ const session = require("express-session");
 const MongoStore = require("connect-mongo");
 
 const app = express();
-app.use(cors());
+app.use(bodyParser.json());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "*", // your frontend URL
+  credentials: true, // allow session cookies
+  methods: ["GET","POST"],
+  allowedHeaders: ["Content-Type"]
+}));
+
 app.use(bodyParser.json());
 
 // Serve public folder
@@ -46,29 +53,32 @@ async function getNextBookingId() {
 // ====== Email Transporter ======
 const transporter = nodemailer.createTransport({
   service: 'gmail',
+  // auth: {
+  //   user: 'sharingyatra@gmail.com',
+  //   pass: 'ksnkixrxdktmtbgs' // App password
+  // }
   auth: {
-    user: 'sharingyatra@gmail.com',
-    pass: 'ksnkixrxdktmtbgs' // App password
+    user: process.env.user,
+    pass: process.env.pass
   }
 });
 
 // ====== Session Setup ======
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "secret123",
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({
-      mongoUrl: process.env.MONGO_URI,
-      collectionName: "sessions",
-    }),
-    cookie: {
-      maxAge: 1000 * 60 * 60,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production"
-    }
-  })
-);
+app.use(session({
+  secret: process.env.SESSION_SECRET || "secret123",
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI,
+    collectionName: "sessions",
+  }),
+  cookie: {
+    maxAge: 1000 * 60 * 60, // 1 hour
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
+  }
+}));
 
 // ====== Generate OTP ======
 app.post('/generate-otp', async (req, res) => {
@@ -717,6 +727,12 @@ app.post("/api/bookings", async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+const cors = require("cors");
+app.use(cors({
+  origin: "*", // ya frontend ka exact URL
+  methods: ["GET","POST"],
+  allowedHeaders: ["Content-Type"]
+}));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
