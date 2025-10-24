@@ -52,15 +52,12 @@ async function getNextBookingId() {
 
 // ====== Email Transporter ======
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  // auth: {
-  //   user: 'sharingyatra@gmail.com',
-  //   pass: 'ksnkixrxdktmtbgs' // App password
-  // }
-  auth: {
-    user: process.env.USER,
-    pass: process.env.PASS
-  }
+    host: 'smtp.sendgrid.net',
+    port: 587,
+    auth: {
+        user: 'apikey',           // always 'apikey' literal
+        pass: process.env.SENDGRID_API_KEY
+    }
 });
 
 // ====== Session Setup ======
