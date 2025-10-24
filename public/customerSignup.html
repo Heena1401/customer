@@ -316,7 +316,7 @@
             clearMessages();
             showMessage('email', 'Sending OTP...', 'info');
 
-            fetch(`${API_BASE}/generate-otp`, {
+            fetch("https://customer-0lnl.onrender.com//generate-otp", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
