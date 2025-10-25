@@ -24,14 +24,18 @@ const app = express();
 app.use(bodyParser.json());
 
 // ✅ FIX: Updated CORS to only include frontend origins
+// ✅ FIX: Add back your actual frontend URL
 app.use(cors({
   origin: [
-    "http://localhost:3000", // Frontend dev server
-    "https://customer-0lnl.onrender.com" // Frontend production (update if different)
+    "http://localhost:5000",  // If your HTML files are served from this port
+    "http://127.0.0.1:5000",  // Alternative localhost
+    "https://customer-0lnl.onrender.com"  // Production frontend
   ],
-  methods: "GET,POST",
-  credentials: true
+  methods: "GET,POST,PUT,DELETE,OPTIONS",
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 
 // Serve public folder
 app.use(express.static(path.join(__dirname, 'public')));
