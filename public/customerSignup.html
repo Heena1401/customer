@@ -77,25 +77,33 @@
             padding: 40px;
             background-color: var(--background-color);
             overflow-y: auto;
+            /* Added scrolling to the form section */
         }
 
         .form-section::-webkit-scrollbar {
             width: 13px;
+            /* Set the width of the scrollbar */
         }
 
         .form-section::-webkit-scrollbar-track {
             background: #f1f1f1;
+            /* Color of the track */
             border-radius: 10px;
+            /* Rounded corners for the track */
         }
 
         .form-section::-webkit-scrollbar-thumb {
             background-color: var(--primary-color);
+            /* Color of the scrollbar thumb */
             border-radius: 10px;
+            /* Rounded corners for the thumb */
             border: 2px solid #f1f1f1;
+            /* Add a border to create a "padding" effect */
         }
 
         .form-section::-webkit-scrollbar-thumb:hover {
             background-color: var(--primary-dark);
+            /* Color of the thumb on hover */
         }
 
         .form-section h2 {
@@ -165,10 +173,12 @@
             margin-bottom: 10px;
         }
 
+
         .otp-section {
             margin-top: 25px;
         }
 
+        /* .message-field for a good-looking message container. */
         .message-field {
             min-height: 25px;
             margin-top: 5px;
@@ -177,6 +187,7 @@
             text-align: left;
         }
 
+        /* Classes for different message types */
         .message-info {
             color: var(--primary-dark);
         }
@@ -186,7 +197,7 @@
         }
 
         .message-error {
-            color: #dc3545;
+            color: rgb(91, 143, 255);
         }
     </style>
 </head>
@@ -216,8 +227,8 @@
             </div>
             <div class="form-group">
                 <label>Age:</label>
-                <input type="number" id="age" required />
-                <p id="age-message" class="message-field"></p>
+                <input type="number" id="number" required />
+                <p id="age" class="message-field"></p>
             </div>
             <div class="form-group">
                 <label>Password:</label>
@@ -246,11 +257,7 @@
     </div>
 
     <script>
-<<<<<<< HEAD
         const API_BASE = 'https://customer-0lnl.onrender.com';
-=======
-        const API_BASE = 'https://customer-0lnl.onrender.com/';
->>>>>>> 2225d9e (Update server.js and customerSignu)
 
         function getMessageElement(fieldId) {
             return document.getElementById(`${fieldId}-message`);
@@ -276,15 +283,12 @@
             return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
         }
 
-        function validatePhone(phone) {
-            // Accepts 10 digits with optional country code
-            return /^(\+\d{1,3}[- ]?)?\d{10}$/.test(phone);
-        }
-
         function validatePasswordRules(password) {
+            // ✅ New strong password rule:
             const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
             return passwordRegex.test(password);
         }
+
 
         function startResendCooldown(seconds = 60) {
             const btn = document.getElementById('resendOtpBtn');
@@ -317,11 +321,7 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-<<<<<<< HEAD
-                credentials: 'include',
-=======
                 credentials: 'include', // <--- important for session
->>>>>>> 2225d9e (Update server.js and customerSignu)
                 body: JSON.stringify({ email })
             })
                 .then(async (res) => {
@@ -345,12 +345,11 @@
         }
 
         function generateOTP() {
-            clearMessages();
+            clearMessages(); // Clear all previous messages
 
             const username = document.getElementById("name").value.trim();
             const email = document.getElementById("email").value.trim();
             const phone = document.getElementById("phone").value.trim();
-            const age = document.getElementById("age").value.trim();
             const pass = document.getElementById("password").value;
             const confirmPass = document.getElementById("confirmPassword").value;
 
@@ -361,22 +360,6 @@
 
             if (!email || !validateEmail(email)) {
                 showMessage("email", "Please enter a valid email address.", "error");
-                return;
-            }
-
-            if (!phone || !validatePhone(phone)) {
-                showMessage("phone", "Please enter a valid 10-digit phone number.", "error");
-                return;
-            }
-
-            if (!age) {
-                showMessage("age", "Age is required.", "error");
-                return;
-            }
-
-            const ageNum = parseInt(age);
-            if (isNaN(ageNum) || ageNum < 18 || ageNum > 120) {
-                showMessage("age", "Age must be between 18 and 120.", "error");
                 return;
             }
 
@@ -401,7 +384,7 @@
             const password = document.getElementById('password').value;
             const otp = document.getElementById('otpInput').value.trim();
             const phone = document.getElementById('phone').value.trim();
-            const age = document.getElementById('age').value.trim();
+            const age = document.getElementById('number').value.trim();
 
             if (!otp) {
                 showMessage('otp', 'Please enter the OTP sent to your email.', 'error');
@@ -419,8 +402,8 @@
                     email,
                     username,
                     password,
-                    phone,
-                    age,
+                    phone,   // ✅ new
+                    age,     // ✅ new
                     otp
                 })
             })
