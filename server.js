@@ -20,7 +20,7 @@ const session = require("express-session");
 const MongoStore = require("connect-mongo");
 
 const app = express();
-
+app.set('trust proxy', 1); 
 app.use(bodyParser.json());
 
 // ✅ FIXED CORS - Works for both local and Render
