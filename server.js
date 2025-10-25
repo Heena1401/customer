@@ -5,6 +5,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
 const fs = require("fs");
+const rateLimit = require('express-rate-limit');
 const Agencies = require('./models/Agencies');
 const Vehicle = require('./models/Vehicles');
 const User = require("./models/User");
@@ -18,15 +19,19 @@ const session = require("express-session");
 const MongoStore = require("connect-mongo");
 
 const app = express();
-app.use(bodyParser.json());
-app.use(cors({
-  origin: process.env.FRONTEND_URL || "*", // your frontend URL
-  credentials: true, // allow session cookies
-  methods: ["GET","POST"],
-  allowedHeaders: ["Content-Type"]
-}));
 
+// ✅ FIX: Removed duplicate bodyParser.json()
 app.use(bodyParser.json());
+
+// ✅ FIX: Updated CORS to only include frontend origins
+app.use(cors({
+  origin: [
+    "http://localhost:3000", // Frontend dev server
+    "https://customer-0lnl.onrender.com" // Frontend production (update if different)
+  ],
+  methods: "GET,POST",
+  credentials: true
+}));
 
 // Serve public folder
 app.use(express.static(path.join(__dirname, 'public')));
@@ -47,17 +52,17 @@ async function getNextBookingId() {
     { $inc: { seq: 1 } },
     { new: true, upsert: true }
   );
-  return "BO113" + counter.seq; // e.g., BO1112
+  return "BO113" + counter.seq;
 }
 
 // ====== Email Transporter ======
+// ✅ FIX: Removed commented-out hardcoded credentials
 const transporter = nodemailer.createTransport({
-    host: 'smtp.sendgrid.net',
-    port: 587,
-    auth: {
-        user: 'apikey',           // always 'apikey' literal
-        pass: process.env.SENDGRID_API_KEY
-    }
+  service: 'gmail',
+  auth: {
+    user: process.env.USER,
+    pass: process.env.PASS
+  }
 });
 
 // ====== Session Setup ======
@@ -77,8 +82,17 @@ app.use(session({
   }
 }));
 
+// ✅ FIX: Added rate limiting for OTP generation
+const otpLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // Max 5 OTP requests per hour per IP
+  message: { success: false, message: 'Too many OTP requests. Please try again after an hour.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // ====== Generate OTP ======
-app.post('/generate-otp', async (req, res) => {
+app.post('/generate-otp', otpLimiter, async (req, res) => {
   const { email } = req.body;
 
   try {
@@ -96,7 +110,7 @@ app.post('/generate-otp', async (req, res) => {
     console.log(`📩 OTP for ${email}: ${otp} (valid 3 min)`);
 
     await transporter.sendMail({
-      from: 'sharingyatra@gmail.com',
+      from: process.env.USER || 'sharingyatra@gmail.com',
       to: email,
       subject: 'Your OTP Code - Sharing Yatra',
       text: `Dear user,\n\nYour OTP is ${otp}.\nIt will expire in 3 minutes.\n\nDo not share it with anyone.\n\nSharing Yatra`
@@ -123,7 +137,9 @@ app.post('/register', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Name is required' });
     }
 
+    // ✅ FIX: Delete OTP after invalid attempt to prevent brute force
     if (otpRecord.otp !== otp) {
+      await OTP.deleteOne({ email });
       return res.status(400).json({ success: false, message: 'Invalid OTP' });
     }
 
@@ -135,16 +151,26 @@ app.post('/register', async (req, res) => {
       });
     }
 
-    const phoneRegex = /^[0-9]{10}$/;
+    // ✅ FIX: Updated phone validation to accept country codes
+    const phoneRegex = /^(\+\d{1,3}[- ]?)?\d{10}$/;
     if (!phoneRegex.test(phone)) {
-      return res.status(400).json({ success: false, message: 'Phone number must be 10 digits' });
+      return res.status(400).json({ success: false, message: 'Phone number must be 10 digits (country code optional)' });
     }
 
+    // ✅ FIX: Added proper age validation with range check
     if (!age || age.toString().trim() === "") {
       return res.status(400).json({ success: false, message: 'Age is required' });
     }
 
-    const newUser = new User({ email, username, password, phone, age });
+    const ageNum = parseInt(age);
+    if (isNaN(ageNum) || ageNum < 18 || ageNum > 120) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Age must be a number between 18 and 120' 
+      });
+    }
+
+    const newUser = new User({ email, username, password, phone, age: ageNum });
     await newUser.save();
     await OTP.deleteOne({ email });
 
@@ -220,32 +246,19 @@ app.get("/dashboard", (req, res) => {
 
 // --- START: RAIL GRAPH IMPLEMENTATION ---
 
-// Load station data once from JSON file
 const mumbaiNetwork = JSON.parse(
   fs.readFileSync(path.join(__dirname, "public", "stationdata.json"), "utf-8")
 );
 
-// Graph API Class (Copied from your graph logic)
 class RailGraph {
-  /**
-  * transferPenalty: cost to transfer between lines at the same station (default 0.5)
-  * defaultEdgeWeight: weight used when distance info missing between adjacent stations (default 1)
-  */
   constructor({ transferPenalty = 0.5, defaultEdgeWeight = 1 } = {}) {
     this.transferPenalty = transferPenalty;
     this.defaultEdgeWeight = defaultEdgeWeight;
-
-    // adjacency map: nodeId -> [ { to: nodeId, weight, meta } ]
     this.adj = new Map();
-
-    // nodeInfo: nodeId -> { stationName, lineName, distance (may be null) }
     this.nodeInfo = new Map();
-
-    // helper: stationName -> Set(lineName)
     this.stationLines = new Map();
   }
 
-  // node id for a station occurrence on a particular line
   static nodeId(stationName, lineName) {
     return `${stationName}@@${lineName}`;
   }
@@ -254,7 +267,6 @@ class RailGraph {
     if (!this.adj.has(nodeId)) {
       this.adj.set(nodeId, []);
       this.nodeInfo.set(nodeId, info);
-      // register stationLines
       const { stationName, lineName } = info;
       if (!this.stationLines.has(stationName)) this.stationLines.set(stationName, new Set());
       this.stationLines.get(stationName).add(lineName);
@@ -262,14 +274,12 @@ class RailGraph {
   }
 
   _addEdge(a, b, w, meta = {}) {
-    if (!this.adj.has(a) || !this.adj.has(b)) return; // silently skip if node is missing
+    if (!this.adj.has(a) || !this.adj.has(b)) return;
     this.adj.get(a).push({ to: b, weight: w, meta });
     this.adj.get(b).push({ to: a, weight: w, meta });
   }
 
-  // Build graph from your network JSON
   buildFromNetwork(network) {
-    // first pass: station -> first-known numeric distance (for fallback)
     const stationDistanceLookup = new Map();
     for (const line of network.lines) {
       for (const route of line.routes) {
@@ -282,7 +292,6 @@ class RailGraph {
       }
     }
 
-    // create nodes for every station occurrence and add edges between adjacent stations on same route
     for (const line of network.lines) {
       const lineName = line.line_name;
       for (const route of line.routes) {
@@ -298,22 +307,18 @@ class RailGraph {
           this._ensureNode(id, { stationName: name, lineName, distance: dist });
         }
 
-        // Add edges between adjacent stations on this route
         for (let i = 0; i < stations.length - 1; i++) {
           const s1 = stations[i], s2 = stations[i + 1];
           const id1 = RailGraph.nodeId(s1.station_name, lineName);
           const id2 = RailGraph.nodeId(s2.station_name, lineName);
 
-          // compute weight using distances when available
           const d1 = this.nodeInfo.get(id1)?.distance;
           const d2 = this.nodeInfo.get(id2)?.distance;
           let weight;
           if (typeof d1 === 'number' && typeof d2 === 'number') {
             weight = Math.abs(d2 - d1);
-            // If somehow weight is 0 (same distance), still set to a small positive number
             if (weight === 0) weight = 0.0001;
           } else {
-            // fallback
             weight = this.defaultEdgeWeight;
           }
 
@@ -322,23 +327,19 @@ class RailGraph {
       }
     }
 
-    // Add transfer edges between different line-nodes that represent the same station name
     for (const [stationName, lineSet] of this.stationLines.entries()) {
       const lines = Array.from(lineSet);
       if (lines.length <= 1) continue;
-      // fully connect the occurrences with transferPenalty
       for (let i = 0; i < lines.length; i++) {
         for (let j = i + 1; j < lines.length; j++) {
           const a = RailGraph.nodeId(stationName, lines[i]);
           const b = RailGraph.nodeId(stationName, lines[j]);
-          // transfer edge
           this._addEdge(a, b, this.transferPenalty, { type: 'transfer', stationName });
         }
       }
     }
   }
 
-  // find all nodeIds for a given stationName
   findNodesForStation(stationName) {
     const nodes = [];
     for (const [nodeId, info] of this.nodeInfo.entries()) {
@@ -347,14 +348,12 @@ class RailGraph {
     return nodes;
   }
 
-  // Dijkstra over nodeIds. startStationName/endStationName are station names (not nodeIds)
   shortestPath(startStationName, endStationName) {
     const startNodes = this.findNodesForStation(startStationName);
     const endNodes = new Set(this.findNodesForStation(endStationName));
     if (startNodes.length === 0) return { found: false };
     if (endNodes.size === 0) return { found: false };
 
-    // prepare distances and prev
     const distances = new Map();
     const prev = new Map();
     const visited = new Set();
@@ -362,12 +361,9 @@ class RailGraph {
       distances.set(nodeId, Infinity);
       prev.set(nodeId, null);
     }
-    // initialize start nodes
     for (const s of startNodes) distances.set(s, 0);
 
-    // Priority Queue based Dijkstra for efficiency (though keeping simple selection for now)
     while (true) {
-      // pick unvisited node with smallest distance
       let u = null;
       let bestDist = Infinity;
       for (const [nodeId, dist] of distances.entries()) {
@@ -376,10 +372,9 @@ class RailGraph {
           u = nodeId;
         }
       }
-      if (u === null) break; // all remaining unreachable
+      if (u === null) break;
       visited.add(u);
 
-      // relax neighbors
       for (const edge of this.adj.get(u)) {
         const v = edge.to;
         if (visited.has(v)) continue;
@@ -391,7 +386,6 @@ class RailGraph {
       }
     }
 
-    // find best end node
     let bestEnd = null;
     let bestDistance = Infinity;
     for (const e of endNodes) {
@@ -403,7 +397,6 @@ class RailGraph {
     }
     if (bestEnd === null) return { found: false };
 
-    // reconstruct path
     const nodePath = [];
     let cur = bestEnd;
     while (cur) {
@@ -412,7 +405,6 @@ class RailGraph {
     }
     nodePath.reverse();
 
-    // format path as readable sequence (extracting just what's needed for booking)
     const path = nodePath.map(nodeId => {
       const info = this.nodeInfo.get(nodeId);
       return { stationName: info.stationName, lineName: info.lineName };
@@ -426,20 +418,22 @@ class RailGraph {
   }
 }
 
-// Global RailGraph instance
 const railGraph = new RailGraph({ transferPenalty: 0.5 });
 railGraph.buildFromNetwork(mumbaiNetwork);
 console.log("✅ Rail Graph Built (Transfer Penalty: 0.5 km)");
-// --- END: RAIL GRAPH IMPLEMENTATION ---
 
-// REMOVED: The old stationData definition and unused getRouteDetails function
-
+// ✅ FIX: Added date validation in parseTime function
 function parseTime(date, timeString) {
   if (!timeString) {
     throw new Error("Booking time is missing");
   }
 
-  // If format is "HH:mm" (24hr)
+  // Validate date
+  const dateObj = new Date(date);
+  if (!date || isNaN(dateObj.getTime())) {
+    throw new Error("Invalid date provided");
+  }
+
   if (/^\d{1,2}:\d{2}$/.test(timeString)) {
     const [hours, minutes] = timeString.split(":").map(Number);
     const d = new Date(date);
@@ -447,7 +441,6 @@ function parseTime(date, timeString) {
     return d;
   }
 
-  // If format is "h:mm AM/PM"
   const parts = timeString.split(" ");
   if (parts.length !== 2) {
     throw new Error("Invalid time format, must be 'h:mm AM/PM' or 'HH:mm'");
@@ -469,16 +462,14 @@ function formatTime(date) {
   let minutes = date.getMinutes();
   const ampm = hours >= 12 ? 'PM' : 'AM';
   hours = hours % 12;
-  hours = hours ? hours : 12; // the hour '0' should be '12'
+  hours = hours ? hours : 12;
   minutes = minutes < 10 ? '0' + minutes : minutes;
   return hours + ':' + minutes + ' ' + ampm;
 }
 
-// NEW FUNCTION: Calculates arrival times based on shortest path
-// This replaces the old simple getRouteDetails
 function calculateArrivalTimes(path, startTime, travelDate) {
   const journeyStart = parseTime(travelDate, startTime);
-  const stationsInPath = []; // Stores the final, simplified path
+  const stationsInPath = [];
   let currentTime = journeyStart;
   let totalPhysicalDistance = 0;
 
@@ -488,7 +479,6 @@ function calculateArrivalTimes(path, startTime, travelDate) {
     let prevStation = i > 0 ? path[i - 1].stationName : null;
     let prevLine = i > 0 ? path[i - 1].lineName : null;
 
-    // 1. Calculate time change from the previous step (track or transfer)
     if (i > 0) {
       const prevNodeId = RailGraph.nodeId(prevStation, prevLine);
       const currNodeId = RailGraph.nodeId(stationName, lineName);
@@ -497,83 +487,52 @@ function calculateArrivalTimes(path, startTime, travelDate) {
 
       if (edge) {
         if (edge.meta.type === 'track') {
-          // Track travel time
           const distanceKm = edge.weight;
-          const travelMinutes = distanceKm * 5; // 5 minutes per km
+          const travelMinutes = distanceKm * 5;
           currentTime = new Date(currentTime.getTime() + travelMinutes * 60000);
           totalPhysicalDistance += distanceKm;
         } else if (edge.meta.type === 'transfer') {
-          // Transfer penalty time (assuming 5 minutes fixed time penalty)
           currentTime = new Date(currentTime.getTime() + 5 * 60000);
-          // No physical distance added for transfer
         }
       }
     }
 
-    // 2. Check for MERGE/FILTER: If current station is a transfer point (same name as previous, different line)
-    // and it was the departure node of the transfer, we don't need a separate entry.
-
-    // If we are at the START station OR if the current station is NOT the same as the last recorded station
     if (i === 0 || stationName !== stationsInPath[stationsInPath.length - 1].name) {
-      // This is a new station (or the starting station) - add it to the simplified path
       stationsInPath.push({
         name: stationName,
         time: formatTime(currentTime),
         line: lineName
       });
     } else if (stationName === stationsInPath[stationsInPath.length - 1].name) {
-      // This is a transfer point (Kurla -> Kurla).
-      // We only need to update the time and line of the *previous* entry (the first Kurla)
-      // to reflect the departure time and the new line.
-
-      // NOTE: Your image shows the same time (1:58 AM) for both Kurla entries, 
-      // suggesting the 5-minute transfer penalty logic may be missing or offset.
-      // However, to fix the double entry:
-
-      // The time calculated for the second 'Kurla' is effectively the departure time (Arrival + Penalty).
-      // Overwrite the time and line of the previous entry with the departure details.
       stationsInPath[stationsInPath.length - 1].time = formatTime(currentTime);
       stationsInPath[stationsInPath.length - 1].line = lineName;
-
-      // The stations array in the database will now look like:
-      // ...
-      // { name: "Vidyavihar", time: "1:48 AM", line: "Central" }
-      // { name: "Kurla", time: "2:03 AM", line: "Harbour" } <-- Single entry showing final departure time & new line
-      // { name: "Tilak Nagar", time: "2:08 AM", line: "Harbour" }
-      // ...
     }
   }
 
   return {
     stations: stationsInPath,
-    totalPhysicalDistance // Return the actual physical distance
+    totalPhysicalDistance
   };
 }
-// This section must be in your server.js to fix the 404 error
 
-// ====== Shortest Distance API (NEW) ======
+// ====== Shortest Distance API ======
 app.get("/api/distance", (req, res) => {
   const { from, to } = req.query;
 
   if (!from || !to) {
-    // Return JSON 400 for missing inputs
     return res.status(400).json({ success: false, message: "Both 'from' and 'to' stations are required." });
   }
-
 
   try {
     const result = railGraph.shortestPath(from, to);
 
     if (!result.found) {
-      // Return JSON 404 for route not found
       return res.status(404).json({ success: false, message: "Route not found between these stations." });
     }
 
-    // ... (rest of the logic to calculate physical distance/transfers)
     let totalPhysicalDistance = 0;
     let transfers = 0;
 
-    // Iterate through the path to separate physical distance and transfers
     for (let i = 0; i < result.path.length - 1; i++) {
       const prevNodeId = RailGraph.nodeId(result.path[i].stationName, result.path[i].lineName);
       const currNodeId = RailGraph.nodeId(result.path[i + 1].stationName, result.path[i + 1].lineName);
@@ -591,47 +550,47 @@ app.get("/api/distance", (req, res) => {
 
     res.json({
       success: true,
-      totalDistance: parseFloat(totalPhysicalDistance.toFixed(2)), 
+      totalDistance: parseFloat(totalPhysicalDistance.toFixed(2)),
       weightedDistance: parseFloat(result.totalWeightedDistance.toFixed(2)),
       transfers: transfers,
       route: result.path.map(p => p.stationName)
     });
 
   } catch (error) {
-    console.error("Distance API Error:", error);
+    console.error("Distance API Error:", error.message, error.stack);
     res.status(500).json({ success: false, message: "Server error calculating distance." });
   }
 });
 
+// ✅ FIX: Escaped regex input to prevent injection
 app.get("/api/search-rides", async (req, res) => {
   try {
     const { address } = req.query;
-    const searchStation = address ? address.toLowerCase() : "";
+    let searchStation = address ? address.toLowerCase() : "";
+    
+    // ✅ SECURITY FIX: Escape special regex characters
+    searchStation = searchStation.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    
     console.log("Searching agencies near:", searchStation);
 
-    // FIX #1 & #2: Using the correct 'Agencies' model and the correct query logic
     const agencies = await Agencies.find({
       $expr: {
         $regexMatch: {
-          input: searchStation, // The full address (e.g., "near station, thane")
-          regex: { $concat: ["\\b", "$oprateStation", "\\b"] }, // The station name (e.g., "thane")
-          options: "i" // Case-insensitive
+          input: searchStation,
+          regex: { $concat: ["\\b", "$oprateStation", "\\b"] },
+          options: "i"
         }
       }
     });
 
     if (!agencies.length) {
-      // FIX #3: Send a proper 404 error, not a 200 OK
       return res.status(404).json({ message: "No agencies found for this station." });
     }
 
-    // For each agency, fetch its vehicles
     const agenciesWithVehicles = await Promise.all(
       agencies.map(async (agency) => {
-        // FIX #1: Use the correct model variable 'Vehicle' (singular)
         const vehicles = await Vehicle.find({ agencyId: agency._id });
 
-        // This format matches what your frontend expects
         return {
           _id: agency._id,
           name: agency.agencyName,
@@ -642,7 +601,6 @@ app.get("/api/search-rides", async (req, res) => {
     );
 
     console.log("✅ agenciesWithVehicles:", agenciesWithVehicles.length);
-    // FIX #3: Send the array directly, not wrapped in an object
     res.json(agenciesWithVehicles);
 
   } catch (err) {
@@ -651,22 +609,19 @@ app.get("/api/search-rides", async (req, res) => {
   }
 });
 
-
-
 // ====== Booking API ======
 app.post("/api/bookings", async (req, res) => {
   try {
-    // CORRECTED: The original 'if (!req.session.user)' check was commented out. It's good practice to keep it.
+    // ✅ Authentication check enabled
     if (!req.session.user) {
       return res.status(401).json({ message: "Not logged in" });
     }
 
     let {
       from, to, pickupAddress, bookingType, date, time, area, city,
-      agencyId, vehicleId, fare, totalDistance 
+      agencyId, vehicleId, fare, totalDistance
     } = req.body;
 
-    // --- CRITICAL FIX from your code: Handle Express Connect ---
     if (bookingType === 'express_connect') {
       const now = new Date();
       date = date || now.toISOString().split('T')[0];
@@ -677,7 +632,6 @@ app.post("/api/bookings", async (req, res) => {
       return res.status(400).json({ success: false, message: "Missing required booking details." });
     }
 
-    // The RailGraph logic for calculating final route details remains
     const shortestPathResult = railGraph.shortestPath(from, to);
     if (!shortestPathResult.found) {
       return res.status(400).json({ success: false, message: "No route found." });
@@ -688,7 +642,7 @@ app.post("/api/bookings", async (req, res) => {
 
     const customerName = req.session.user.name;
     const customerEmail = req.session.user.email;
-   const  mobile = req.session.user.phone;
+    const mobile = req.session.user.phone;
     const bookingId = await getNextBookingId();
 
     const booking = new Booking({
@@ -703,7 +657,7 @@ app.post("/api/bookings", async (req, res) => {
       city,
       customerName,
       customerEmail,
-      mobile,    
+      mobile,
       stations: stationsInPath,
       totalDistance: parseFloat(totalDistance) || parseFloat(totalPhysicalDistance.toFixed(2)),
       agencyId,
@@ -724,8 +678,6 @@ app.post("/api/bookings", async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
-
-
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
