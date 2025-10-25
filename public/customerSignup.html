@@ -246,7 +246,11 @@
     </div>
 
     <script>
+<<<<<<< HEAD
         const API_BASE = 'https://customer-0lnl.onrender.com';
+=======
+        const API_BASE = 'https://customer-0lnl.onrender.com/';
+>>>>>>> 2225d9e (Update server.js and customerSignu)
 
         function getMessageElement(fieldId) {
             return document.getElementById(`${fieldId}-message`);
@@ -313,7 +317,11 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
+<<<<<<< HEAD
                 credentials: 'include',
+=======
+                credentials: 'include', // <--- important for session
+>>>>>>> 2225d9e (Update server.js and customerSignu)
                 body: JSON.stringify({ email })
             })
                 .then(async (res) => {
@@ -333,6 +341,7 @@
                     showMessage('email', 'Network error while sending OTP.', 'error');
                     document.getElementById('generateOtpBtn').disabled = false;
                 });
+
         }
 
         function generateOTP() {
