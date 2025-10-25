@@ -72,13 +72,33 @@ async function getNextBookingId() {
 }
 
 // Email Transporter
+// ✅ ENHANCED Email Transporter with debugging
 const transporter = nodemailer.createTransport({
   service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false, // Use STARTTLS
   auth: {
     user: process.env.USER,
     pass: process.env.PASS
+  },
+  tls: {
+    rejectUnauthorized: false
+  },
+  debug: true, // ✅ Enable debug logs
+  logger: true // ✅ Enable logger
+});
+
+// ✅ Verify email configuration on startup
+transporter.verify(function (error, success) {
+  if (error) {
+    console.log('❌ Email transporter verification failed:', error);
+    console.log('❌ Check your USER and PASS environment variables');
+  } else {
+    console.log('✅ Email server is ready to send messages');
   }
 });
+
 
 // ✅ FIXED SESSION - Works for both HTTP (local) and HTTPS (Render)
 app.use(session({
