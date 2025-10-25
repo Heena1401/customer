@@ -20,11 +20,14 @@ const MongoStore = require("connect-mongo");
 const app = express();
 app.use(bodyParser.json());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "*", // your frontend URL
-  credentials: true, // allow session cookies
-  methods: ["GET","POST"],
-  allowedHeaders: ["Content-Type"]
+  origin: [
+    "http://localhost:5000",
+    "https://customer-0lnl.onrender.com"
+  ],
+  methods: "GET,POST",
+  credentials: true
 }));
+
 
 app.use(bodyParser.json());
 
@@ -58,8 +61,8 @@ const transporter = nodemailer.createTransport({
   //   pass: 'ksnkixrxdktmtbgs' // App password
   // }
   auth: {
-    user: process.env.user,
-    pass: process.env.pass
+    user: process.env.USER,
+    pass: process.env.PASS
   }
 });
 
@@ -525,25 +528,8 @@ function calculateArrivalTimes(path, startTime, travelDate) {
         line: lineName
       });
     } else if (stationName === stationsInPath[stationsInPath.length - 1].name) {
-      // This is a transfer point (Kurla -> Kurla).
-      // We only need to update the time and line of the *previous* entry (the first Kurla)
-      // to reflect the departure time and the new line.
-
-      // NOTE: Your image shows the same time (1:58 AM) for both Kurla entries, 
-      // suggesting the 5-minute transfer penalty logic may be missing or offset.
-      // However, to fix the double entry:
-
-      // The time calculated for the second 'Kurla' is effectively the departure time (Arrival + Penalty).
-      // Overwrite the time and line of the previous entry with the departure details.
       stationsInPath[stationsInPath.length - 1].time = formatTime(currentTime);
       stationsInPath[stationsInPath.length - 1].line = lineName;
-
-      // The stations array in the database will now look like:
-      // ...
-      // { name: "Vidyavihar", time: "1:48 AM", line: "Central" }
-      // { name: "Kurla", time: "2:03 AM", line: "Harbour" } <-- Single entry showing final departure time & new line
-      // { name: "Tilak Nagar", time: "2:08 AM", line: "Harbour" }
-      // ...
     }
   }
 
@@ -594,7 +580,7 @@ app.get("/api/distance", (req, res) => {
 
     res.json({
       success: true,
-      totalDistance: parseFloat(totalPhysicalDistance.toFixed(2)), 
+      totalDistance: parseFloat(totalPhysicalDistance.toFixed(2)),
       weightedDistance: parseFloat(result.totalWeightedDistance.toFixed(2)),
       transfers: transfers,
       route: result.path.map(p => p.stationName)
@@ -666,7 +652,7 @@ app.post("/api/bookings", async (req, res) => {
 
     let {
       from, to, pickupAddress, bookingType, date, time, area, city,
-      agencyId, vehicleId, fare, totalDistance 
+      agencyId, vehicleId, fare, totalDistance
     } = req.body;
 
     // --- CRITICAL FIX from your code: Handle Express Connect ---
@@ -691,7 +677,7 @@ app.post("/api/bookings", async (req, res) => {
 
     const customerName = req.session.user.name;
     const customerEmail = req.session.user.email;
-   const  mobile = req.session.user.phone;
+    const mobile = req.session.user.phone;
     const bookingId = await getNextBookingId();
 
     const booking = new Booking({
@@ -706,7 +692,7 @@ app.post("/api/bookings", async (req, res) => {
       city,
       customerName,
       customerEmail,
-      mobile,    
+      mobile,
       stations: stationsInPath,
       totalDistance: parseFloat(totalDistance) || parseFloat(totalPhysicalDistance.toFixed(2)),
       agencyId,
@@ -727,12 +713,8 @@ app.post("/api/bookings", async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
-const cors = require("cors");
-app.use(cors({
-  origin: "*", // ya frontend ka exact URL
-  methods: ["GET","POST"],
-  allowedHeaders: ["Content-Type"]
-}));
+
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
