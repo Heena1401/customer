@@ -84,11 +84,11 @@ app.use(session({
 }));
 
 // ====== Generate OTP ======
-app.post('/generate-otp', async (req, res) => {
+// ✅ Updated Generate OTP with SendGrid
+app.post('/generate-otp', otpLimiter, async (req, res) => {
   const { email } = req.body;
 
   try {
-    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ success: false, message: 'Email already registered' });
@@ -101,19 +101,69 @@ app.post('/generate-otp', async (req, res) => {
 
     console.log(`📩 OTP for ${email}: ${otp} (valid 3 min)`);
 
-    await transporter.sendMail({
-      from: 'sharingyatra@gmail.com',
-      to: email,
-      subject: 'Your OTP Code - Sharing Yatra',
-      text: `Dear user,\n\nYour OTP is ${otp}.\nIt will expire in 3 minutes.\n\nDo not share it with anyone.\n\nSharing Yatra`
-    });
+    // ✅ HTML email template
+    const emailHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+          .container { max-width: 600px; margin: 30px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+          .header { text-align: center; color: #5b92e5; margin-bottom: 20px; }
+          .otp-box { background: #f0f4f8; padding: 25px; border-radius: 10px; text-align: center; margin: 20px 0; }
+          .otp-code { font-size: 36px; font-weight: bold; color: #5b92e5; letter-spacing: 8px; margin: 15px 0; }
+          .warning { color: #dc3545; font-weight: bold; margin-top: 20px; }
+          .footer { text-align: center; color: #666; font-size: 12px; margin-top: 30px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Sharing Yatra</h1>
+            <h2>Email Verification</h2>
+          </div>
+          <p>Dear user,</p>
+          <p>Thank you for signing up with Sharing Yatra. To complete your registration, please use the following One-Time Password (OTP):</p>
+          <div class="otp-box">
+            <p style="margin: 0; font-size: 14px; color: #666;">Your OTP is:</p>
+            <div class="otp-code">${otp}</div>
+            <p style="margin: 10px 0 0 0; font-size: 12px; color: #999;">Valid for 3 minutes</p>
+          </div>
+          <p class="warning">⚠️ Do not share this code with anyone. Our team will never ask for your OTP.</p>
+          <p>If you didn't request this OTP, please ignore this email.</p>
+          <div class="footer">
+            <p>Best regards,<br><strong>Sharing Yatra Team</strong></p>
+            <p>This is an automated message, please do not reply.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
 
-    res.json({ success: true, message: 'OTP sent successfully' });
+    // ✅ Send email via SendGrid
+    const result = await sendEmailViaSendGrid(
+      email,
+      'Your OTP Code - Sharing Yatra',
+      `Your OTP is ${otp}. It will expire in 3 minutes. Do not share this code with anyone.`,
+      emailHTML
+    );
+
+    if (result.success) {
+      res.json({ success: true, message: 'OTP sent successfully to your email' });
+    } else {
+      // OTP still saved in DB, but email failed
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to send OTP email. Please try again.' 
+      });
+    }
+
   } catch (err) {
-    console.error('Error sending OTP:', err);
+    console.error('❌ Error in generate-otp:', err);
     res.status(500).json({ success: false, message: 'Failed to send OTP' });
   }
 });
+
 
 // ====== Register (Validate OTP + Save User) ======
 app.post('/register', async (req, res) => {
