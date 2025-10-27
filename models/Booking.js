@@ -1,77 +1,42 @@
-const mongoose = require("mongoose");
+  const mongoose = require("mongoose");
 
-const bookingSchema = new mongoose.Schema({
-  // ✅ Added index for better query performance
-  bookingId: { 
-    type: String, 
-    required: true, 
-    unique: true,
-    index: true
-  },
-  customerName: { type: String, required: true }, // ✅ Added required
-  customerEmail: { type: String, required: true }, // ✅ Added required
-  mobile: { type: String, required: true }, // ✅ Added required
-  from: { type: String, required: true },
-  to: { type: String, required: true },
-  pickupAddress: { type: String, required: true },
-  area: { type: String, required: true }, // ✅ Added required
-  city: { type: String, required: true }, // ✅ Added required
-  bookingType: { 
-    type: String, 
-    required: true,
-    enum: ['express_connect', 'scheduled'] // ✅ Added enum for validation
-  },
-  date: { type: String, required: true },  
-  time: { type: String, required: true }, 
-  
-  // ✅ Enhanced stations schema with line information
-  stations: [
-    {
-      name: { type: String, required: true },
-      time: { type: String, required: true },
-      line: { type: String } // ✅ Added line field (from updated calculateArrivalTimes)
-    }
-  ],
-  
-  totalDistance: { type: Number, required: true },
-  
-  // ✅ Properly formatted with consistent indentation
-  agencyId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Agencies',
-    required: true,
-    index: true // ✅ Added index for faster lookups
-  },
-  
-  vehicleId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Vehicle',
-    required: true,
-    index: true // ✅ Added index for faster lookups
-  },
-  
-  // ✅ Fixed capitalization: 'Fare' -> 'fare' (consistent with backend)
-  // ✅ Changed to Number for proper calculations
-  fare: { 
-    type: Number,
-    required: true
-  },
-  
-  // ✅ Added enum for status validation and fixed default capitalization
-  status: { 
-    type: String, 
-    default: "pending",
-    enum: ['pending', 'confirmed', 'cancelled', 'completed'],
-    lowercase: true
-  }
-}, {
-  // ✅ Added timestamps for createdAt and updatedAt
-  timestamps: true
-});
+  const bookingSchema = new mongoose.Schema({
+    bookingId: { type: String, required: true, unique: true },
+    customerName: { type: String },
+    customerEmail: { type: String },
+    mobile: { type: String },
+    from: { type: String, required: true },
+    to: { type: String, required: true },
+    pickupAddress: { type: String, required: true },
+    area: { type: String },
+    city: { type: String },
+    bookingType: { type: String, required: true },
+    date: { type: String, required: true },
+    time: { type: String, required: true },
+    stations: [
+      {
+        name: { type: String, required: true },
+        time: { type: String, required: true }
+      }
+    ],
+    totalDistance: { type: Number, required: true },
+    agencyId: {
+      type: mongoose.Schema.Types.ObjectId, // This is the correct type for an ID
+      ref: 'Agencies', // This links it to your Agencies model
+      required: true
+    },
+    vehicleId: {
+      type: mongoose.Schema.Types.ObjectId, // This is the correct type for an ID
+      ref: 'Vehicle', // This links it to your Vehicle model
+      required: true
+    },
+    parentBookingId: { 
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Booking',
+        required: false
+      },
+  fare: { type: Number },
+    status: { type: String, default: "Pending" }
+  });
 
-// ✅ Add compound index for common queries
-bookingSchema.index({ customerEmail: 1, status: 1 });
-bookingSchema.index({ agencyId: 1, status: 1 });
-bookingSchema.index({ date: 1, status: 1 });
-
-module.exports = mongoose.model("Booking", bookingSchema);
+  module.exports = mongoose.model("Booking", bookingSchema);

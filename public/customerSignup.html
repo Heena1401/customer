@@ -257,7 +257,7 @@
     </div>
 
     <script>
-        const API_BASE = 'https://customer-0lnl.onrender.com';
+        const API_BASE = 'http://localhost:5000';
 
         function getMessageElement(fieldId) {
             return document.getElementById(`${fieldId}-message`);
@@ -321,8 +321,9 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                credentials: 'include', // <--- important for session
-                body: JSON.stringify({ email })
+                body: JSON.stringify({
+                    email
+                })
             })
                 .then(async (res) => {
                     const data = await res.json().catch(() => ({
@@ -341,7 +342,6 @@
                     showMessage('email', 'Network error while sending OTP.', 'error');
                     document.getElementById('generateOtpBtn').disabled = false;
                 });
-
         }
 
         function generateOTP() {
